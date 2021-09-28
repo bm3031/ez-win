@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from bs4 import BeautifulSoup
 import cloudscraper
 import requests_cache
-from time import strftime
+from datetime import datetime, timedelta
 
 blacklist = ['SPIR', 'EWCZ', 'SRZN','PBHC']
 small_tickers = []
@@ -115,9 +115,20 @@ tickers = (small_tickers + micro_tickers)[::-1]
 
 #df = data.DataReader(tickers, 'yahoo', start='2021/08/19', end='2021/09/18')["Adj Close"]
 
+<<<<<<< HEAD
 df = pd.DataFrame()
 
 df = reader(tickers, start='2021/08/19', end='2021/09/18', chunksize=5, pause=0.3, retry_count=10).read()["Close"]
+=======
+end = datetime.now()
+
+start = end - timedelta(days=90)
+
+end = end.strftime('%Y/%m/%d')
+start = start.strftime('%Y/%m/%d')
+
+df = reader(tickers, start=start, end=end).read()['Close']
+>>>>>>> changed to datetime library and added start and end variables
 
 with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
     print(df)
