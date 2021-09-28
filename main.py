@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from bs4 import BeautifulSoup
 import cloudscraper
 import requests_cache
+from time import strftime
 
 blacklist = ['SPIR', 'EWCZ', 'SRZN']
 small_tickers = []
