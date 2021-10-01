@@ -124,6 +124,7 @@ start = start.strftime('%Y/%m/%d')
 
 df = reader(tickers, start=start, end=end).read()['Close']
 
+
 with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
     print(df)
 
