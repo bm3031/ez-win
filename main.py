@@ -1,14 +1,15 @@
 import numpy as np
 import pandas as pd
 from pandas_datareader import data
-from pandas_datareader.yahoo.daily import YahooDailyReader as reader
+# from pandas_datareader.yahoo.daily import YahooDailyReader as reader
+from pandas_datareader.stooq import StooqDailyReader as reader
 import matplotlib.pyplot as plt
 from bs4 import BeautifulSoup
 import cloudscraper
 import requests_cache
 from time import strftime
 
-blacklist = ['SPIR', 'EWCZ', 'SRZN']
+blacklist = ['SPIR', 'EWCZ', 'SRZN','PBHC']
 small_tickers = []
 micro_tickers = []
 
@@ -106,16 +107,17 @@ for row in micro_rows2:
 # print(len(small_tickers))
 # print(len(micro_tickers))
 
-tickers = small_tickers + micro_tickers
+tickers = (small_tickers + micro_tickers)[::-1]
 
 # print(tickers)
-
 
 # OPTIMIZATION
 
 #df = data.DataReader(tickers, 'yahoo', start='2021/08/19', end='2021/09/18')["Adj Close"]
 
-df = reader(tickers, start='2021/08/19', end='2021/09/18').read()['Adj Close']
+df = pd.DataFrame()
+
+df = reader(tickers, start='2021/08/19', end='2021/09/18', chunksize=5, pause=0.3, retry_count=10).read()["Close"]
 
 with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
     print(df)
@@ -136,7 +138,7 @@ p_vol = []  # Define an empty list for portfolio volatility
 p_weights = []  # Define an empty list for asset weights
 
 num_assets = len(df.columns)
-num_portfolios = 100  # number of points on graph
+num_portfolios = 100 # number of points on graph
 
 for portfolio in range(num_portfolios):
 
@@ -178,7 +180,7 @@ with pd.option_context('display.max_rows', None, 'display.max_columns', None):
     print(optimal_risky_port)
 
 plt.subplots(figsize=(10, 10))
-plt.scatter(portfolios['Volatility'], portfolios['Returns'],marker='o', s=10, alpha=0.3)
+plt.scatter(portfolios['Volatility'], portfolios['Returns'], marker='o', s=10, alpha=0.3)
 plt.scatter(optimal_risky_port[1], optimal_risky_port[0], color='g', marker='*', s=500)
 
 print("Cum ratio:", ((portfolios['Returns']-rf)/portfolios['Volatility']).max())
