@@ -138,10 +138,66 @@ with pd.option_context('display.max_rows', None, 'display.max_columns', None):  
 # logs of percentage change for time additive returns and covariance matrix
 
 cov_matrix = df.pct_change().apply(lambda x: np.log(1 + x)).cov()
+num_assets = len(df.columns)
 
 # individual expected returns based off of last month's returns
 
 ind_er = 100*(df.iloc[0]/df.iloc[-1]-1)
+
+num_iterations = 10
+step_size = 0.00001
+rf = 0.15
+
+#small change in weights
+d=0.00001
+
+iterations = []
+
+def evaluate(cov_matrix, ind_er, weights):
+    returns = np.dot(weights, ind_er)  # expected returns
+
+    var = cov_matrix.mul(weights, axis=0).mul(weights, axis=1).sum().sum()  # Portfolio Variance
+    sd = np.sqrt(var)  # Daily standard deviation
+    ann_sd = sd * np.sqrt(365)  # Monthly standard deviation = volatility
+    return ann_sd, returns
+
+for i in range(num_iterations):
+    if i == 0:
+        #first iteration with uniform weights
+        weights = np.full(num_assets, 1/num_assets)
+
+
+    else:
+        #approximate gradient vector
+        gradient = np.zeros(num_assets-1)
+        for weight in range(num_assets-1):
+            dweights = np.zeros(num_assets)
+            dweights[-1] = -d
+            dweights[weight] = d
+            #print(d)
+            #print(dweights)
+            new_sd, new_ret = evaluate(cov_matrix, ind_er, weights + dweights)
+            gradient[weight] = ((new_ret-rf)/new_sd - ratio)/d
+
+        #calculate change vector with last element making sum of 0
+        change = np.append(gradient*step_size,0-(gradient*step_size).sum())
+        print("ratio:",ratio,"gradient:",np.linalg.norm(gradient))
+
+        weights = weights+change
+
+    ann_sd, returns = evaluate(cov_matrix, ind_er, weights)
+    ratio = (returns-rf)/ann_sd
+    iterations.append((ann_sd,returns))
+
+
+
+
+
+
+
+
+'''
+
 
 # print(ind_er)
 # print(len(df.columns))
@@ -151,7 +207,7 @@ p_vol = []  # Define an empty list for portfolio volatility
 p_weights = []  # Define an empty list for asset weights
 
 num_assets = len(df.columns)
-num_portfolios = 100000  # number of points on graph
+num_portfolios = 100  # number of points on graph
 
 for portfolio in range(num_portfolios):
 
@@ -215,3 +271,5 @@ print("Cum ratio:", ((portfolios['Returns']-rf)/portfolios['Volatility']).max())
 
 
 plt.show()
+
+'''
