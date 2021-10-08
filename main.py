@@ -1,13 +1,15 @@
 import numpy as np
 import pandas as pd
 from pandas_datareader import data
-from pandas_datareader.yahoo.daily import YahooDailyReader as reader
+# from pandas_datareader.yahoo.daily import YahooDailyReader as reader
+from pandas_datareader.stooq import StooqDailyReader as reader
 import matplotlib.pyplot as plt
 from bs4 import BeautifulSoup
 import cloudscraper
 import requests_cache
+from datetime import datetime, timedelta
 
-blacklist = ['SPIR', 'EWCZ', 'SRZN']
+blacklist = ['SPIR', 'EWCZ', 'SRZN','PBHC']
 small_tickers = []
 micro_tickers = []
 
@@ -101,20 +103,26 @@ for row in micro_rows2:
             c += 1
 
 
+print(small_tickers)
+print(micro_tickers)
 
-# print(len(small_tickers))
-# print(len(micro_tickers))
+tickers = (small_tickers[0:15] + micro_tickers[0:15])
 
-tickers = small_tickers + micro_tickers
-
-# print(tickers)
-
+print(tickers)
 
 # OPTIMIZATION
 
 #df = data.DataReader(tickers, 'yahoo', start='2021/08/19', end='2021/09/18')["Adj Close"]
 
-df = reader(tickers, start='2021/08/19', end='2021/09/18').read()['Adj Close']
+end = datetime.now()
+
+start = end - timedelta(days=90)
+
+end = end.strftime('%Y/%m/%d')
+start = start.strftime('%Y/%m/%d')
+print(end)
+df = reader(tickers, start=start, end=end).read()['Close']
+
 
 with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
     print(df)
@@ -125,7 +133,7 @@ cov_matrix = df.pct_change().apply(lambda x: np.log(1 + x)).cov()
 
 # individual expected returns based off of last month's returns
 
-ind_er = 100*(df.iloc[-1]/df.iloc[0]-1)
+ind_er = 100*(df.iloc[0]/df.iloc[-1]-1)
 
 # print(ind_er)
 # print(len(df.columns))
@@ -135,7 +143,7 @@ p_vol = []  # Define an empty list for portfolio volatility
 p_weights = []  # Define an empty list for asset weights
 
 num_assets = len(df.columns)
-num_portfolios = 100  # number of points on graph
+num_portfolios = 100000  # number of points on graph
 
 for portfolio in range(num_portfolios):
 
@@ -150,7 +158,7 @@ for portfolio in range(num_portfolios):
 
     var = cov_matrix.mul(weights, axis=0).mul(weights, axis=1).sum().sum()  # Portfolio Variance
     sd = np.sqrt(var)  # Daily standard deviation
-    ann_sd = sd * np.sqrt(30)  # Monthly standard deviation = volatility
+    ann_sd = sd * np.sqrt(365)  # Monthly standard deviation = volatility
     p_vol.append(ann_sd)
 
 # print(p_ret, "/n", p_vol)
@@ -169,15 +177,23 @@ portfolios = pd.DataFrame(data1)  # Dataframe of the portfolios created
 portfolios.plot.scatter(x='Volatility', y='Returns', marker='o', s=10, alpha=0.3, grid=True, figsize=[10, 10])
 
 # Finding the optimal portfolio
-rf = 0.005  # risk factor - interest rate on bonds (risk free rate)
+rf = 15  # risk factor - target
 
 optimal_risky_port = portfolios.iloc[((portfolios['Returns']-rf)/portfolios['Volatility']).idxmax()]  # Cum ratio
 
 with pd.option_context('display.max_rows', None, 'display.max_columns', None):
     print(optimal_risky_port)
 
+for i in range(2, 32):
+    #  print(df.iloc[-1, i-2])
+    optimal_risky_port[i] = (99700 * optimal_risky_port[i])/df.iloc[0, i-2]
+
+
+with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+    print(optimal_risky_port)
+
 plt.subplots(figsize=(10, 10))
-plt.scatter(portfolios['Volatility'], portfolios['Returns'],marker='o', s=10, alpha=0.3)
+plt.scatter(portfolios['Volatility'], portfolios['Returns'], marker='o', s=10, alpha=0.3)
 plt.scatter(optimal_risky_port[1], optimal_risky_port[0], color='g', marker='*', s=500)
 
 print("Cum ratio:", ((portfolios['Returns']-rf)/portfolios['Volatility']).max())
