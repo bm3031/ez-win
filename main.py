@@ -165,14 +165,15 @@ for i in range(num_iterations):
     if i == 0:
         #first iteration with uniform weights
         weights = np.full(num_assets, 1/num_assets)
+        indices = np.nonzero(weights)[0]
 
 
     else:
         #approximate gradient vector
         gradient = np.zeros(num_assets-1)
-        for weight in range(num_assets-1):
+        for weight in indices[:-1]:
             dweights = np.zeros(num_assets)
-            dweights[-1] = -d
+            dweights[indices[-1]] = -d
             dweights[weight] = d
             #print(d)
             #print(dweights)
@@ -180,9 +181,14 @@ for i in range(num_iterations):
             gradient[weight] = ((new_ret-rf)/new_sd - ratio)/d
 
         #calculate change vector with last element making sum of 0
-        change = np.append(gradient*step_size,0-(gradient*step_size).sum())
+        change = np.append(gradient*step_size,0)
+        change[indices[-1]] = -sum(change)
 
         weights = weights+change
+        while min(weights) < 0:
+            weights = np.where(weights<0,0,weights)
+            indices = np.nonzero(weights)[0]
+            weights[indices[-1]] = 1-sum(weights[:indices[-1]])
 
     ann_sd, returns = evaluate(cov_matrix, ind_er, weights)
     ratio = (returns-rf)/ann_sd
