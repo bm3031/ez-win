@@ -130,6 +130,7 @@ else:
     df = reader(tickers, start=start, end=end).read()['Close']
     with open("cache.dat","wb") as f:
         pickle.dump(df,f)
+    print("Loaded data from cache")
 
 with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
     print(df)
