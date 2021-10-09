@@ -1,13 +1,14 @@
 import numpy as np
 import pandas as pd
 from pandas_datareader import data
-# from pandas_datareader.yahoo.daily import YahooDailyReader as reader
 from pandas_datareader.stooq import StooqDailyReader as reader
 import matplotlib.pyplot as plt
 from bs4 import BeautifulSoup
 import cloudscraper
 import requests_cache
 from datetime import datetime, timedelta
+import os
+import pickle
 
 blacklist = ['SPIR', 'EWCZ', 'SRZN','PBHC']
 small_tickers = []
@@ -120,9 +121,16 @@ start = end - timedelta(days=90)
 
 end = end.strftime('%Y/%m/%d')
 start = start.strftime('%Y/%m/%d')
-print(end)
-df = reader(tickers, start=start, end=end).read()['Close']
 
+if os.path.exists("cache.dat"):
+    with open("cache.dat","rb") as f:
+        df = pickle.load(f)
+    print("Loaded data from cache")
+
+else:
+    df = reader(tickers, start=start, end=end).read()['Close']
+    with open("cache.dat","wb") as f:
+        pickle.dump(df,f)
 
 with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
     print(df)
