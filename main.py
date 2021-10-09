@@ -144,12 +144,12 @@ num_assets = len(df.columns)
 
 ind_er = 100*(df.iloc[0]/df.iloc[-1]-1)
 
-num_iterations = 10
-step_size = 0.00001
+num_iterations = 10000
+step_size = 1e-5
 rf = 0.15
 
 #small change in weights
-d=0.00001
+d=1e-7
 
 iterations = []
 
@@ -181,7 +181,6 @@ for i in range(num_iterations):
 
         #calculate change vector with last element making sum of 0
         change = np.append(gradient*step_size,0-(gradient*step_size).sum())
-        print("ratio:",ratio,"gradient:",np.linalg.norm(gradient))
 
         weights = weights+change
 
@@ -189,6 +188,12 @@ for i in range(num_iterations):
     ratio = (returns-rf)/ann_sd
     iterations.append((ann_sd,returns))
 
+
+    if i%100 == 0:
+        if i>0:
+            print("ratio:",ratio,"gradient:",np.linalg.norm(gradient))
+        else:
+            print("initial ratio:",ratio)
 
 
 
