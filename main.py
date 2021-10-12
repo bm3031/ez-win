@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 import os
 import pickle
 
-blacklist = ['SPIR', 'EWCZ', 'SRZN','PBHC']
+blacklist = ['SPIR', 'EWCZ', 'SRZN','PBHC','SBFG','CFFI','VERY','NICK']
 small_tickers = []
 micro_tickers = []
 
@@ -107,7 +107,7 @@ for row in micro_rows2:
 print(small_tickers)
 print(micro_tickers)
 
-tickers = (small_tickers[0:15] + micro_tickers[0:15])
+tickers = (small_tickers[0:25] + micro_tickers[0:25])
 
 print(tickers)
 
@@ -142,10 +142,10 @@ num_assets = len(df.columns)
 
 # individual expected returns based off of last month's returns
 
-ind_er = 100*(df.iloc[0]/df.iloc[-1]-1)
+ind_er = (df.iloc[0]/df.iloc[-1]-1)*0.4
 
 num_iterations = 10000
-step_size = 1e-5
+step_size = 1e-3
 rf = 0.15
 
 #small change in weights
@@ -158,8 +158,8 @@ def evaluate(cov_matrix, ind_er, weights):
 
     var = cov_matrix.mul(weights, axis=0).mul(weights, axis=1).sum().sum()  # Portfolio Variance
     sd = np.sqrt(var)  # Daily standard deviation
-    ann_sd = sd * np.sqrt(365)  # Monthly standard deviation = volatility
-    return ann_sd, returns
+    sd = sd * np.sqrt(90)  # Standard deviation over 3 month period
+    return sd, returns
 
 for i in range(num_iterations):
     if i == 0:
@@ -190,21 +190,22 @@ for i in range(num_iterations):
             indices = np.nonzero(weights)[0]
             weights[indices[-1]] = 1-sum(weights[:indices[-1]])
 
-    ann_sd, returns = evaluate(cov_matrix, ind_er, weights)
-    ratio = (returns-rf)/ann_sd
-    iterations.append((ann_sd,returns))
+    sd, returns = evaluate(cov_matrix, ind_er, weights)
+    ratio = (returns-rf)/sd
+    iterations.append((sd,returns))
 
 
     if i%100 == 0:
         if i>0:
-            print("ratio:",ratio,"gradient:",np.linalg.norm(gradient))
+            print("ratio:",ratio,"gradient:",np.linalg.norm(gradient),"stocks left:",len(indices))
         else:
             print("initial ratio:",ratio)
 
 
+plt.subplots(figsize=(10, 10))
+plt.scatter(*zip(*iterations), marker='o', s=10, alpha=0.3)
 
-
-
+plt.show()
 
 
 '''
