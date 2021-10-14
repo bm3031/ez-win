@@ -146,7 +146,7 @@ ind_er = (df.iloc[0]/df.iloc[-1]-1)*0.4
 
 num_iterations = 10000
 step_size = 1e-3
-rf = 0.15
+rf = 0.05
 
 #small change in weights
 d=1e-7
@@ -171,14 +171,17 @@ for i in range(num_iterations):
     else:
         #approximate gradient vector
         gradient = np.zeros(num_assets-1)
-        for weight in indices[:-1]:
-            dweights = np.zeros(num_assets)
-            dweights[indices[-1]] = -d
-            dweights[weight] = d
-            #print(d)
-            #print(dweights)
-            new_sd, new_ret = evaluate(cov_matrix, ind_er, weights + dweights)
-            gradient[weight] = ((new_ret-rf)/new_sd - ratio)/d
+        for weight in range(num_assets-1):
+            if weight != indices[-1]:
+                dweights = np.zeros(num_assets)
+                dweights[indices[-1]] = -d
+                dweights[weight] = d
+                #print(d)
+                #print(dweights)
+                new_sd, new_ret = evaluate(cov_matrix, ind_er, weights + dweights)
+                ind_gradient = ((new_ret-rf)/new_sd - ratio)/d
+                if ind_gradient > 0 or weight in indices:
+                    gradient[weight] = ind_gradient
 
         #calculate change vector with last element making sum of 0
         change = np.append(gradient*step_size,0)
