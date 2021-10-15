@@ -142,7 +142,7 @@ num_assets = len(df.columns)
 
 # individual expected returns based off of last month's returns
 
-ind_er = (df.iloc[0]/df.iloc[-1]-1)*0.4
+ind_er = np.log(1.05+(df.iloc[0]/df.iloc[-1]-1)*0.1)
 
 num_iterations = 10000
 step_size = 1e-3
