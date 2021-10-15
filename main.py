@@ -9,6 +9,7 @@ import requests_cache
 from datetime import datetime, timedelta
 import os
 import pickle
+from math import log
 
 blacklist = ['SPIR', 'EWCZ', 'SRZN','PBHC','SBFG','CFFI','VERY','NICK']
 small_tickers = []
@@ -144,19 +145,24 @@ num_assets = len(df.columns)
 
 ind_er = np.log(1.05+(df.iloc[0]/df.iloc[-1]-1)*0.1)
 
-num_iterations = 10000
-step_size = 1e-3
-rf = 0.05
+num_iterations = 2500
+step_size = 1e-2
+rf = log(1.05)
+
+
+swing_factor = 0.1
 
 #small change in weights
 d=1e-7
 
 iterations = []
+ratios = []
 
 def evaluate(cov_matrix, ind_er, weights):
     returns = np.dot(weights, ind_er)  # expected returns
 
     var = cov_matrix.mul(weights, axis=0).mul(weights, axis=1).sum().sum()  # Portfolio Variance
+    var += weights.dot(weights) * swing_factor
     sd = np.sqrt(var)  # Daily standard deviation
     sd = sd * np.sqrt(90)  # Standard deviation over 3 month period
     return sd, returns
@@ -196,6 +202,7 @@ for i in range(num_iterations):
     sd, returns = evaluate(cov_matrix, ind_er, weights)
     ratio = (returns-rf)/sd
     iterations.append((sd,returns))
+    ratios.append(ratio)
 
 
     if i%100 == 0:
@@ -206,7 +213,7 @@ for i in range(num_iterations):
 
 
 plt.subplots(figsize=(10, 10))
-plt.scatter(*zip(*iterations), marker='o', s=10, alpha=0.3)
+plt.scatter(*zip(*iterations), marker='o', s=10, alpha=0.3, c=ratios)
 
 plt.show()
 
