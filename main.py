@@ -146,7 +146,7 @@ num_assets = len(df.columns)
 ind_er = np.log(1.05+(df.iloc[0]/df.iloc[-1]-1)*0.1)
 
 num_iterations = 2500
-step_size = 1e-2
+step_size = 2e-2
 rf = log(1.05)
 
 
